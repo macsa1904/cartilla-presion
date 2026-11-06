@@ -1,0 +1,1166 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mi cartilla de presión</title>
+<meta name="description" content="Registro diario de presión arterial y pulso.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#EDF0F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F141C" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Presión">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Barlow+Condensed:wght@500;600&display=swap" media="print" onload="this.media='all'">
+<style>
+/* Layout: el formulario es un tensiómetro de mesa (pantalla LCD de siete segmentos, igual a la que el paciente está leyendo);
+   a su lado, sin cajas, la cartilla: constancia, promedio, gráfico, historial y reporte. */
+:root{
+  color-scheme:light;
+  --plane:#EDF0F5; --paper:#FBFCFD; --ink:#16202E; --ink-2:#465364; --ink-3:#5D6979;
+  --rule:#D3DAE3; --rule-2:#B3BECC;
+  --cuff:#233F78; --on-cuff:#FFFFFF; --wash:#DEE5F1;
+  --shell:#F9FAFC; --shell-edge:#C5CEDA; --shadow:rgba(35,63,120,.22);
+  --lcd:#C6D2C0; --lcd-ink:#141F18; --lcd-ghost:rgba(20,31,24,.08); --lcd-soft:#36443A; --lcd-focus:rgba(20,31,24,.09); --lcd-glow:none;
+  --sys:#2a78d6; --dia:#c2477f; --pul:#465364;
+  --ok:#1B6E3C; --ok-bg:#DCF1E2; --ele:#7A5A00; --ele-bg:#F8EBC2; --e1:#9A4A0B; --e1-bg:#FBE1CC;
+  --e2:#B3261E; --e2-bg:#F9DAD6; --cri:#FFFFFF; --cri-bg:#8E1620; --low:#1F5F99; --low-bg:#D9E8F6;
+  --f-body:"Atkinson Hyperlegible Next","Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-label:"Barlow Condensed","Roboto Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-data:"Atkinson Hyperlegible Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --plane:#0F141C; --paper:#161C26; --ink:#E8ECF2; --ink-2:#B2BCCA; --ink-3:#93A0B2;
+  --rule:#2A3341; --rule-2:#445064;
+  --cuff:#8FAAF0; --on-cuff:#0F1728; --wash:#222D42;
+  --shell:#1C2430; --shell-edge:#323D4E; --shadow:rgba(0,0,0,.5);
+  --lcd:#0A1C22; --lcd-ink:#8DEBE2; --lcd-ghost:rgba(141,235,226,.075); --lcd-soft:#78CFC7; --lcd-focus:rgba(141,235,226,.09); --lcd-glow:drop-shadow(0 0 4px rgba(141,235,226,.28));
+  --sys:#3987e5; --dia:#d55181; --pul:#B2BCCA;
+  --ok:#7FDBA0; --ok-bg:#12341F; --ele:#EBCB6B; --ele-bg:#3A2F0C; --e1:#F5A76B; --e1-bg:#43260F;
+  --e2:#F78F86; --e2-bg:#4A1B18; --cri:#FFFFFF; --cri-bg:#B7242E; --low:#8CC3F2; --low-bg:#12304C;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --plane:#0F141C; --paper:#161C26; --ink:#E8ECF2; --ink-2:#B2BCCA; --ink-3:#93A0B2;
+  --rule:#2A3341; --rule-2:#445064;
+  --cuff:#8FAAF0; --on-cuff:#0F1728; --wash:#222D42;
+  --shell:#1C2430; --shell-edge:#323D4E; --shadow:rgba(0,0,0,.5);
+  --lcd:#0A1C22; --lcd-ink:#8DEBE2; --lcd-ghost:rgba(141,235,226,.075); --lcd-soft:#78CFC7; --lcd-focus:rgba(141,235,226,.09); --lcd-glow:drop-shadow(0 0 4px rgba(141,235,226,.28));
+  --sys:#3987e5; --dia:#d55181; --pul:#B2BCCA;
+  --ok:#7FDBA0; --ok-bg:#12341F; --ele:#EBCB6B; --ele-bg:#3A2F0C; --e1:#F5A76B; --e1-bg:#43260F;
+  --e2:#F78F86; --e2-bg:#4A1B18; --cri:#FFFFFF; --cri-bg:#B7242E; --low:#8CC3F2; --low-bg:#12304C;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--plane);color:var(--ink);font:400 16px/1.5 var(--f-body)}
+h1,h2,h3,h4,p,ul,dl,dd,fieldset{margin:0;padding:0}
+fieldset{border:0;min-width:0}
+ul{list-style:none}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--cuff);outline-offset:2px}
+h1,h2{font-family:var(--f-label);font-weight:600;letter-spacing:.005em;text-wrap:balance}
+h1{font-size:2.1rem;line-height:1.05}
+h2{font-size:1.5rem;line-height:1.15}
+
+.app{max-width:1180px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px;display:grid;gap:18px}
+.top{display:flex;flex-wrap:wrap;gap:4px 20px;align-items:baseline;justify-content:space-between}
+.donde{font-size:.875rem;color:var(--ink-3);min-width:0}
+.donde.aviso{color:var(--e1);font-weight:600}
+.cols{display:grid;grid-template-columns:minmax(0,1fr);gap:32px}
+.col-izq,.col-der{display:grid;gap:14px;min-width:0;align-content:start}
+.col-der{gap:30px}
+@media (min-width:920px){.cols{grid-template-columns:minmax(350px,400px) minmax(0,1fr);gap:44px}}
+
+/* El tensiómetro */
+.monitor{background:var(--shell);border:1px solid var(--shell-edge);border-radius:22px;padding:12px;display:grid;gap:14px;box-shadow:0 18px 34px -26px var(--shadow)}
+.lcd{background:var(--lcd);color:var(--lcd-ink);border-radius:9px;padding:9px 10px 10px;display:grid;gap:2px;box-shadow:inset 0 0 0 1px var(--lcd-ghost),inset 0 2px 5px var(--lcd-ghost)}
+.lcd-top{display:flex;justify-content:space-between;gap:12px;font:600 .8rem/1.3 var(--f-data);font-variant-numeric:tabular-nums;letter-spacing:.02em;padding-inline:6px;color:var(--lcd-soft)}
+.lcd-row{position:relative;display:grid;grid-template-columns:4.6rem minmax(0,1fr);align-items:center;padding:4px 6px;border-radius:5px;cursor:text;--dh:clamp(62px,18.5vw,78px)}
+.lcd-row.chico{--dh:44px}
+.lcd-row:focus-within{background:var(--lcd-focus);outline:2px solid var(--lcd-ink);outline-offset:-2px}
+.lcd-row input{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;border:0;cursor:text}
+.lcd-et{display:grid;line-height:1.1}
+.lcd-et b{font:600 1.5rem/1 var(--f-label);letter-spacing:.05em;display:flex;align-items:center;gap:5px}
+.lcd-et b svg{width:13px;height:13px}
+.lcd-et small{font-size:.72rem;color:var(--lcd-soft);line-height:1.2;margin-top:2px}
+.dgts{display:flex;justify-content:flex-end;gap:.32rem}
+.dgt{height:var(--dh);aspect-ratio:56/100;transform:skewX(-5deg);filter:var(--lcd-glow);flex:none}
+.dgt polygon{fill:var(--lcd-ghost)}
+.dgt polygon.on,.lcd.prueba .dgt polygon{fill:var(--lcd-ink)}
+.lcd-nivel{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 6px 0;font-weight:600;font-size:.875rem}
+.barras{display:flex;gap:3px;flex:none}
+.barras i{display:block;width:1.35rem;height:8px;background:var(--lcd-ghost)}
+.barras i.on{background:var(--lcd-ink)}
+
+.campos{display:grid;gap:10px;padding-inline:4px}
+.campo{display:grid;grid-template-columns:4.6rem minmax(0,1fr);gap:8px;align-items:center}
+.campo>label,.campo>legend,.campo-et{font-size:.875rem;color:var(--ink-2);font-weight:600}
+fieldset.campo legend{float:left;padding:0;width:100%}
+fieldset.campo{display:grid}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:9px;overflow:hidden;background:var(--paper);min-width:0}
+.seg label{flex:1 1 0;position:relative;min-width:0;cursor:pointer}
+.seg input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.seg span{display:block;text-align:center;padding:9px 4px;font-size:.9rem;font-weight:600;line-height:1.3;color:var(--ink-2)}
+.seg label+label span{border-left:1px solid var(--rule)}
+.seg input:checked+span{background:var(--cuff);color:var(--on-cuff)}
+.seg input:focus-visible+span{outline:2px solid var(--cuff);outline-offset:-4px}
+.seg input:checked:focus-visible+span{outline-color:var(--on-cuff)}
+.texto{width:100%;min-width:0;min-height:42px;padding:8px 10px;border:1px solid var(--rule-2);border-radius:9px;background:var(--paper);color:var(--ink);font-size:16px}
+.texto::placeholder{color:var(--ink-3)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;cursor:pointer}
+.chip input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.chip span{display:inline-block;padding:7px 12px;border:1px solid var(--rule-2);border-radius:999px;font-size:.875rem;font-weight:600;color:var(--ink-2);background:var(--paper)}
+.chip input:checked+span{background:var(--wash);border-color:var(--cuff);color:var(--ink)}
+.chip input:checked+span::before{content:"✓ "}
+.chip input:focus-visible+span{outline:2px solid var(--cuff);outline-offset:2px}
+.primario{background:var(--cuff);color:var(--on-cuff);border:0;border-radius:12px;min-height:54px;width:100%;font-size:1.1rem;font-weight:700}
+.primario:hover{filter:brightness(1.1)}
+.primario:active{transform:translateY(1px)}
+.primario[disabled]{opacity:.65;cursor:progress}
+.sec{background:transparent;border:1px solid var(--rule-2);color:var(--ink);border-radius:9px;min-height:44px;padding:0 14px;font-weight:600;font-size:.95rem}
+.sec:hover{background:var(--wash)}
+.sec.peligro{color:var(--e2);border-color:var(--e2)}
+.acciones{display:grid;gap:8px;padding-inline:4px}
+.fila{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.edicion{font-weight:600;font-size:.95rem;padding-inline:4px}
+.error{color:var(--e2);font-weight:600;padding-inline:4px}
+.listo{color:var(--ink-2);padding-inline:4px;font-size:.95rem;font-variant-numeric:tabular-nums}
+.listo b{color:var(--ink)}
+.alerta{background:var(--cri-bg);color:var(--cri);border-radius:10px;padding:12px 14px;display:grid;gap:6px;font-size:.95rem}
+.alerta strong{font-size:1.05rem}
+.alerta b{user-select:all}
+
+.guia{border-top:1px solid var(--rule);padding-block:10px 4px;padding-inline:4px}
+.guia:last-child{border-bottom:1px solid var(--rule);padding-bottom:10px}
+.guia summary{cursor:pointer;font-weight:600;padding-block:3px}
+.guia ul{display:grid;gap:7px;margin-top:10px;padding-left:1.1rem;list-style:disc;font-size:.95rem;color:var(--ink-2);max-width:65ch}
+.nota-pie{font-size:.875rem;color:var(--ink-3);margin-top:10px;max-width:65ch}
+.tabla-niveles{overflow-x:auto;margin-top:10px}
+.tabla-niveles table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+.tabla-niveles th{font-weight:600;text-align:left;color:var(--ink-3);font-size:.8rem;padding:4px 8px 6px 0;white-space:nowrap}
+.tabla-niveles td{padding:6px 8px 6px 0;border-top:1px solid var(--rule);white-space:nowrap}
+
+/* Estados de presión */
+[data-n="ok"]{--c:var(--ok);--c-bg:var(--ok-bg)}
+[data-n="ele"]{--c:var(--ele);--c-bg:var(--ele-bg)}
+[data-n="e1"]{--c:var(--e1);--c-bg:var(--e1-bg)}
+[data-n="e2"]{--c:var(--e2);--c-bg:var(--e2-bg)}
+[data-n="cri"]{--c:var(--cri);--c-bg:var(--cri-bg)}
+[data-n="low"]{--c:var(--low);--c-bg:var(--low-bg)}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.82rem;font-weight:700;white-space:nowrap;color:var(--c);background:var(--c-bg)}
+
+/* Cartilla */
+.hoy{display:grid;gap:10px}
+.hoy-linea{font-size:1.05rem;font-weight:600}
+.hoy-linea small{display:block;font-size:.875rem;font-weight:400;color:var(--ink-3)}
+.dias{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px;max-width:560px}
+.dia{display:grid;gap:3px;justify-items:center;font-size:.72rem;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.dia i{display:block;width:100%;height:24px;border-radius:4px;border:1px solid var(--rule-2)}
+.dia[data-n] i{border-color:transparent;background:var(--c)}
+.dia[data-n="cri"] i{background:var(--cri-bg)}
+.dia.es-hoy{color:var(--ink);font-weight:700}
+.dia.es-hoy i{outline:2px solid var(--cuff);outline-offset:1px}
+.periodo{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.periodo .seg{flex:0 1 340px}
+.resumen{display:grid;gap:14px}
+.resumen-cab{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
+.resumen-et{font-size:.95rem;color:var(--ink-2);font-weight:600}
+.promedio{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.promedio b{font-size:clamp(3rem,11vw,4.25rem);font-weight:700;line-height:1;letter-spacing:-.01em}
+.promedio span{color:var(--ink-3);font-size:.95rem}
+.datos{display:grid;grid-template-columns:repeat(auto-fit,minmax(6.5rem,1fr));gap:12px 16px}
+.datos dt{font-size:.82rem;color:var(--ink-3)}
+.datos dd{font-weight:600;font-size:1.1rem;font-variant-numeric:tabular-nums}
+.vacio{color:var(--ink-2);max-width:60ch}
+
+.panel{background:var(--paper);border:1px solid var(--rule);border-radius:12px;padding:12px 12px 10px;display:grid;gap:8px}
+.leyenda{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.875rem;color:var(--ink-2);align-items:center}
+.leyenda span{display:inline-flex;align-items:center;gap:6px}
+.leyenda i{display:block;width:18px;height:2px;border-radius:2px}
+.leyenda .marca{margin-left:auto;background:var(--wash);color:var(--ink);font-weight:700;padding:2px 10px;border-radius:999px;font-size:.82rem}
+.grafico{position:relative;min-width:0;min-height:328px}
+.grafico svg{display:block;width:100%;height:auto;overflow:visible}
+.grafico svg:focus-visible{outline:2px solid var(--cuff);outline-offset:3px}
+.pie{font-size:.82rem;color:var(--ink-3)}
+.eje{font:400 11.5px var(--f-body);fill:var(--ink-3);font-variant-numeric:tabular-nums}
+.t-graf{font:600 12px var(--f-body);fill:var(--ink-2)}
+.fin{font:700 13px var(--f-body);fill:var(--ink);font-variant-numeric:tabular-nums}
+.ref{font:400 11px var(--f-body);fill:var(--ink-2);paint-order:stroke;stroke:var(--paper);stroke-width:3px}
+.g-rej{stroke:var(--rule);stroke-width:1;fill:none}
+.g-ref{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:4 3;fill:none}
+.banda{fill:var(--ink);opacity:.05}
+.l-sys,.l-dia,.l-pul{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.l-sys{stroke:var(--sys)}.l-dia{stroke:var(--dia)}.l-pul{stroke:var(--pul)}
+.p-sys,.p-dia,.p-pul{stroke:var(--paper);stroke-width:2;paint-order:stroke}
+.p-sys{fill:var(--sys)}.p-dia{fill:var(--dia)}.p-pul{fill:var(--pul)}
+.cruz{stroke:var(--ink-3);stroke-width:1}
+.capa{touch-action:pan-y;cursor:crosshair}
+.apagado{opacity:.5}
+.tip{position:absolute;top:6px;left:0;z-index:2;background:var(--paper);border:1px solid var(--rule-2);border-radius:9px;padding:8px 10px;font-size:.82rem;display:grid;gap:3px;min-width:8.5rem;box-shadow:0 8px 20px -12px var(--shadow);pointer-events:none}
+.tip-f{color:var(--ink-3)}
+.tip-r{display:grid;grid-template-columns:14px auto 1fr;gap:6px;align-items:center}
+.tip-r i{display:block;width:14px;height:2px;border-radius:2px}
+.tip-r b{font-size:.95rem;font-variant-numeric:tabular-nums}
+.tip-r span{color:var(--ink-3)}
+
+.grupo{display:grid;gap:2px;padding-block:6px 10px}
+.grupo h3{font-size:.875rem;font-weight:600;color:var(--ink-3);padding-bottom:2px}
+.grupo h3::first-letter{text-transform:uppercase}
+.toma{display:grid;grid-template-columns:4.5rem minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding-block:9px;border-top:1px solid var(--rule)}
+.t-hora{font-variant-numeric:tabular-nums;font-weight:600;display:grid;line-height:1.25}
+.t-hora small{font-weight:400;color:var(--ink-3);font-size:.8rem}
+.t-val{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px;min-width:0;font-variant-numeric:tabular-nums}
+.t-val b{font-size:1.25rem;font-weight:700}
+.t-val span{color:var(--ink-2);font-size:.9rem}
+.t-extra{grid-column:1/-1;display:flex;gap:10px;align-items:baseline;justify-content:space-between;font-size:.875rem;color:var(--ink-2);min-width:0}
+.t-extra span{min-width:0;overflow-wrap:anywhere}
+.enlace{background:none;border:0;padding:2px 0;margin-left:auto;color:var(--cuff);font-weight:600;font-size:.875rem;text-decoration:underline;text-underline-offset:2px;flex:none}
+#verMas{justify-self:start}
+.reporte{display:grid;gap:12px}
+.reporte .campo{grid-template-columns:minmax(0,1fr);gap:4px;max-width:360px}
+#textoReporte{width:100%;min-height:200px;font:400 .85rem/1.45 var(--f-data);padding:10px;border:1px solid var(--rule-2);border-radius:9px;background:var(--paper);color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.primario:active{transform:none}}
+html{background:var(--plane)}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+.instalar{background:var(--wash);border-radius:12px;padding:12px 14px;display:grid;gap:10px}
+.instalar p{max-width:60ch}
+.primario.chico{width:auto;min-height:44px;padding:0 18px;font-size:1rem}
+.alerta a{color:inherit;font-weight:700;text-underline-offset:2px}
+.copia{display:grid;gap:12px}
+.copia .vacio{max-width:62ch}
+.aviso-copia{color:var(--e1)!important;font-weight:600}
+.oculto{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.pie-app{font-size:.82rem;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:14px;max-width:70ch}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <h1>Mi cartilla de presión</h1>
+    <p class="donde" id="donde" role="status">Tus tomas se guardan en este celular. Nadie más las ve.</p>
+  </header>
+
+  <div class="instalar" id="instalar" hidden>
+    <p id="instalarTxt"></p>
+    <div class="fila">
+      <button type="button" class="primario chico" id="instalarSi" hidden>Instalar</button>
+      <button type="button" class="sec" id="instalarNo">Ahora no</button>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="col-izq">
+      <form class="monitor" id="forma" novalidate autocomplete="off" aria-label="Nueva toma de presión">
+        <div class="lcd" id="lcd">
+          <div class="lcd-top"><span id="lcdFecha"></span><span id="lcdMomento"></span></div>
+          <label class="lcd-row" for="sys">
+            <span class="lcd-et"><b>SYS</b><small>la alta<br>mmHg</small></span>
+            <span class="dgts" id="dSys" aria-hidden="true"></span>
+            <input id="sys" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="next" autocomplete="off" aria-label="Presión alta o sistólica, SYS, en mmHg">
+          </label>
+          <label class="lcd-row" for="dia">
+            <span class="lcd-et"><b>DIA</b><small>la baja<br>mmHg</small></span>
+            <span class="dgts" id="dDia" aria-hidden="true"></span>
+            <input id="dia" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="next" autocomplete="off" aria-label="Presión baja o diastólica, DIA, en mmHg">
+          </label>
+          <label class="lcd-row chico" for="pul">
+            <span class="lcd-et"><b>PUL<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-10-9.4C.4 8.3 2.3 4.5 6 4.5c2.2 0 3.9 1.2 6 3.6 2.1-2.4 3.8-3.6 6-3.6 3.7 0 5.6 3.8 4 7.1C19.5 16.4 12 21 12 21z"/></svg></b><small>latidos/min</small></span>
+            <span class="dgts" id="dPul" aria-hidden="true"></span>
+            <input id="pul" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="done" autocomplete="off" aria-label="Pulso, PUL, en latidos por minuto">
+          </label>
+          <div class="lcd-nivel"><span class="barras" id="barras" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span id="lcdNivel" aria-live="polite">Toca SYS y escribe</span></div>
+        </div>
+
+        <p class="edicion" id="edicion" hidden></p>
+        <div class="alerta" id="alerta" role="alert" hidden>
+          <strong>Presión muy alta: más de 180 o más de 120</strong>
+          <span>Espera 5 minutos y vuelve a medirte. Si sigue igual de alta, comunícate de inmediato con tu médico.</span>
+          <span>Si además tienes dolor de pecho, falta de aire, dolor de espalda, adormecimiento o debilidad, cambios en la visión o dificultad para hablar, no esperes: llama al <a href="tel:106">106</a> (SAMU, gratis, 24 horas) o al <a href="tel:117">117</a> si tienes EsSalud.</span>
+        </div>
+
+        <div class="campos">
+          <fieldset class="campo"><legend class="campo-et">Momento</legend>
+            <div class="seg">
+              <label><input type="radio" name="momento" id="mManana" value="manana"><span>Mañana</span></label>
+              <label><input type="radio" name="momento" id="mTarde" value="tarde"><span>Tarde</span></label>
+              <label><input type="radio" name="momento" id="mNoche" value="noche"><span>Noche</span></label>
+            </div>
+          </fieldset>
+          <fieldset class="campo"><legend class="campo-et">Brazo</legend>
+            <div class="seg">
+              <label><input type="radio" name="brazo" id="bIzq" value="izq" checked><span>Izquierdo</span></label>
+              <label><input type="radio" name="brazo" id="bDer" value="der"><span>Derecho</span></label>
+            </div>
+          </fieldset>
+          <div class="campo"><label for="cuando">Cuándo</label><input class="texto" type="datetime-local" id="cuando"></div>
+          <div class="campo"><label for="nota">Nota</label><input class="texto" type="text" id="nota" maxlength="200" placeholder="Opcional: dormí mal…"></div>
+          <div class="chips">
+            <label class="chip"><input type="checkbox" id="med"><span>Ya tomé mi medicación</span></label>
+            <label class="chip"><input type="checkbox" id="ihb"><span>Marcó latido irregular</span></label>
+          </div>
+        </div>
+
+        <p class="error" id="error" role="alert" hidden></p>
+        <div class="acciones">
+          <button type="submit" class="primario" id="guardar">Guardar toma</button>
+          <div class="fila" id="accionesEdicion" hidden>
+            <button type="button" class="sec" id="cancelar">Cancelar</button>
+            <button type="button" class="sec peligro" id="eliminar">Eliminar esta toma</button>
+          </div>
+          <div class="fila" id="confirmarBorrado" hidden>
+            <span>¿Eliminar esta toma para siempre?</span>
+            <button type="button" class="sec peligro" id="siEliminar">Sí, eliminar</button>
+            <button type="button" class="sec" id="noEliminar">No</button>
+          </div>
+          <p class="listo" id="listo" role="status" hidden></p>
+        </div>
+      </form>
+
+      <div>
+        <details class="guia">
+          <summary>Cómo tomarla bien</summary>
+          <ul>
+            <li>Durante los 30 minutos previos no comas, no fumes, no hagas ejercicio ni tomes bebidas con cafeína.</li>
+            <li>Mídete antes de tu medicación de la mañana y ve al baño si lo necesitas.</li>
+            <li>Siéntate con la espalda apoyada, los pies en el piso y las piernas sin cruzar. Descansa 5 minutos en silencio.</li>
+            <li>Apoya el brazo en una mesa, a la altura del corazón, con la palma hacia arriba.</li>
+            <li>Coloca el manguito sobre la piel, justo encima del codo.</li>
+            <li>No hables ni mires el celular mientras mide.</li>
+            <li>Toma 2 lecturas con 1 minuto entre ellas, en la mañana y en la noche, salvo que tu médico te indique otra cosa.</li>
+          </ul>
+        </details>
+        <details class="guia">
+          <summary>Qué significa cada rango</summary>
+          <div class="tabla-niveles">
+            <table>
+              <thead><tr><th scope="col">Categoría</th><th scope="col">SYS</th><th scope="col"></th><th scope="col">DIA</th></tr></thead>
+              <tbody>
+                <tr><td><span class="pill" data-n="ok">Normal</span></td><td>menos de 120</td><td>y</td><td>menos de 80</td></tr>
+                <tr><td><span class="pill" data-n="ele">Elevada</span></td><td>120 a 129</td><td>y</td><td>menos de 80</td></tr>
+                <tr><td><span class="pill" data-n="e1">Alta, etapa 1</span></td><td>130 a 139</td><td>o</td><td>80 a 89</td></tr>
+                <tr><td><span class="pill" data-n="e2">Alta, etapa 2</span></td><td>140 o más</td><td>o</td><td>90 o más</td></tr>
+                <tr><td><span class="pill" data-n="cri">Muy alta</span></td><td>más de 180</td><td>o</td><td>más de 120</td></tr>
+                <tr><td><span class="pill" data-n="low">Baja</span></td><td>menos de 90</td><td>o</td><td>menos de 60</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="nota-pie">Rangos para adultos de la American Heart Association. La categoría Baja es una referencia general. Son una guía: tu médico puede indicarte otra meta.</p>
+        </details>
+      </div>
+    </div>
+
+    <div class="col-der">
+      <section class="hoy" aria-labelledby="tHoy">
+        <h2 class="hoy-linea" id="tHoy">Hoy aún no registras tu presión.</h2>
+        <div class="dias" id="dias" role="img" aria-label="Días con tomas en las últimas dos semanas"></div>
+      </section>
+
+      <section class="resumen" aria-label="Promedio del periodo">
+        <div class="periodo">
+          <div class="seg" role="radiogroup" aria-label="Periodo">
+            <label><input type="radio" name="rango" id="r7" value="d7" checked><span>7 días</span></label>
+            <label><input type="radio" name="rango" id="r30" value="d30"><span>30 días</span></label>
+            <label><input type="radio" name="rango" id="r90" value="d90"><span>90 días</span></label>
+            <label><input type="radio" name="rango" id="rTodo" value="todo"><span>Todo</span></label>
+          </div>
+        </div>
+        <div class="resumen-cab">
+          <span class="resumen-et" id="resEt">Promedio de los últimos 7 días</span>
+          <span class="pill" id="resPill" hidden></span>
+        </div>
+        <div class="promedio"><b id="resVal">--/--</b><span>mmHg</span></div>
+        <dl class="datos" id="resDatos" hidden>
+          <div><dt>Pulso</dt><dd id="resPul"></dd></div>
+          <div><dt>Mañanas</dt><dd id="resMan"></dd></div>
+          <div><dt>Noches</dt><dd id="resNoc"></dd></div>
+          <div><dt>Tomas</dt><dd id="resN"></dd></div>
+        </dl>
+        <p class="vacio" id="resVacio">Cuando registres tu primera toma verás aquí tu promedio.</p>
+      </section>
+
+      <section class="panel" aria-label="Gráfico de presión y pulso">
+        <div id="grafCuerpo" style="display:grid;gap:8px;min-width:0">
+          <div class="leyenda">
+            <span><i style="background:var(--sys)"></i>SYS, la alta</span>
+            <span><i style="background:var(--dia)"></i>DIA, la baja</span>
+            <span class="marca" id="grafEjemplo" hidden>Ejemplo: así se verá tu gráfico</span>
+          </div>
+          <div class="grafico" id="grafico"></div>
+          <p class="pie">Cada punto es el promedio de una sesión: mañana, tarde o noche.</p>
+        </div>
+        <p class="vacio" id="grafVacio" hidden>No hay tomas en este periodo. Prueba con un periodo más largo.</p>
+      </section>
+
+      <section aria-labelledby="tHist" style="display:grid;gap:6px;min-width:0">
+        <h2 id="tHist">Historial</h2>
+        <p class="vacio" id="histVacio">Aquí aparecerá cada toma con su fecha, hora y clasificación. Llena los números de tu tensiómetro y toca Guardar toma.</p>
+        <div id="historial"></div>
+        <button type="button" class="sec" id="verMas" hidden>Ver más tomas</button>
+      </section>
+
+      <section class="reporte" aria-labelledby="tRep">
+        <h2 id="tRep">Reporte para tu médico</h2>
+        <p class="vacio" id="repInfo">Incluye las tomas del periodo que elegiste arriba.</p>
+        <div class="campo"><label for="nombre">Nombre que aparecerá en el reporte</label><input class="texto" id="nombre" type="text" maxlength="80" placeholder="Opcional"></div>
+        <div class="fila">
+          <button type="button" class="sec" id="copiar">Copiar resumen</button>
+          <button type="button" class="sec" id="enviarPdf" hidden>Enviar PDF</button>
+          <button type="button" class="sec" id="bajarPdf">Descargar PDF</button>
+          <button type="button" class="sec" id="bajarCsv">Descargar para Excel</button>
+          <button type="button" class="primario chico" id="enviarListo" hidden>Enviar ahora</button>
+        </div>
+        <p class="listo" id="repMsg" role="status" hidden style="padding-inline:0"></p>
+        <textarea id="textoReporte" readonly hidden aria-label="Texto del reporte"></textarea>
+      </section>
+
+      <section class="copia" aria-labelledby="tCopia">
+        <h2 id="tCopia">Copia de seguridad</h2>
+        <p class="vacio">Tus tomas se guardan solo en este celular. Si cambias de teléfono o borras los datos del navegador, se pierden. Guarda una copia de vez en cuando en Google Drive, en tu correo o en WhatsApp.</p>
+        <p class="vacio" id="copiaEstado" hidden></p>
+        <div class="fila">
+          <button type="button" class="sec" id="guardarCopia">Guardar copia</button>
+          <button type="button" class="sec" id="restaurar">Restaurar una copia</button>
+          <input type="file" id="archivoCopia" class="oculto" accept=".json,application/json" tabindex="-1" aria-hidden="true">
+        </div>
+        <p class="listo" id="copiaMsg" role="status" hidden style="padding-inline:0"></p>
+      </section>
+    </div>
+  </div>
+  <footer class="pie-app">Hecha para tu uso personal. Los rangos son una guía y no reemplazan la indicación de tu médico.</footer>
+</div>
+
+<script>
+'use strict';
+/* ---------- Reglas de la presión ---------- */
+const NIVELES={
+  low:{corto:'Baja',largo:'Baja',paso:0},
+  ok:{corto:'Normal',largo:'Normal',paso:1},
+  ele:{corto:'Elevada',largo:'Elevada',paso:2},
+  e1:{corto:'Alta 1',largo:'Alta, etapa 1',paso:3},
+  e2:{corto:'Alta 2',largo:'Alta, etapa 2',paso:4},
+  cri:{corto:'Muy alta',largo:'Muy alta',paso:5}
+};
+function clasificar(s,d){
+  if(s>180||d>120) return 'cri';
+  if(s>=140||d>=90) return 'e2';
+  if(s>=130||d>=80) return 'e1';
+  if(s>=120) return 'ele';
+  if(s<90||d<60) return 'low';
+  return 'ok';
+}
+function validar(v,ahora){
+  if(!v.sys) return {campo:'sys',msg:'Falta la presión alta (SYS).'};
+  if(!v.dia) return {campo:'dia',msg:'Falta la presión baja (DIA).'};
+  if(!v.pul) return {campo:'pul',msg:'Falta el pulso (PUL).'};
+  if(v.sys<50||v.sys>300) return {campo:'sys',msg:'La presión alta (SYS) debe estar entre 50 y 300. Revisa lo que escribiste.'};
+  if(v.dia<30||v.dia>200) return {campo:'dia',msg:'La presión baja (DIA) debe estar entre 30 y 200. Revisa lo que escribiste.'};
+  if(v.pul<25||v.pul>250) return {campo:'pul',msg:'El pulso (PUL) debe estar entre 25 y 250. Revisa lo que escribiste.'};
+  if(v.dia>=v.sys) return {campo:'dia',msg:'La presión baja (DIA) debe ser menor que la alta (SYS). Revisa si las invertiste.'};
+  if(!v.at) return {campo:'cuando',msg:'Elige la fecha y la hora de la toma.'};
+  if(new Date(v.at).getTime()>(ahora||Date.now())+5*60000) return {campo:'cuando',msg:'La fecha está en el futuro. Corrígela para guardar.'};
+  return null;
+}
+
+/* ---------- Fechas ---------- */
+const MESES=['ene','feb','mar','abr','may','jun','jul','ago','set','oct','nov','dic'];
+const DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const INICIAL=['D','L','M','M','J','V','S'];
+const MOMENTO={manana:'Mañana',tarde:'Tarde',noche:'Noche'};
+const BRAZO={izq:'Izquierdo',der:'Derecho'};
+const RANGOS={d7:7,d30:30,d90:90,todo:null};
+const pad=n=>String(n).padStart(2,'0');
+function localISO(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes())}
+function diaISO(d){return localISO(d).slice(0,10)}
+function inicioDia(d){const x=new Date(d);x.setHours(0,0,0,0);return x}
+function momentoDe(d){const h=d.getHours();return h>=4&&h<12?'manana':h>=12&&h<19?'tarde':'noche'}
+function fechaCorta(iso){const[a,m,d]=iso.slice(0,10).split('-');return d+'/'+m+'/'+a}
+function etiquetaDia(iso){
+  const d=new Date(iso+'T12:00');const hoy=inicioDia(new Date());
+  const dif=Math.round((inicioDia(d)-hoy)/864e5);
+  const base=DIAS[d.getDay()]+' '+d.getDate()+' '+MESES[d.getMonth()]+(d.getFullYear()!==hoy.getFullYear()?' '+d.getFullYear():'');
+  return dif===0?'hoy, '+base:dif===-1?'ayer, '+base:base;
+}
+function desdeRango(r){const n=RANGOS[r];if(!n)return null;const d=inicioDia(new Date());d.setDate(d.getDate()-(n-1));return d}
+function etiquetaRango(r){return RANGOS[r]?'los últimos '+RANGOS[r]+' días':'todas tus tomas'}
+
+/* ---------- Cálculos ---------- */
+function promedio(l){
+  if(!l.length) return null;
+  const m=k=>Math.round(l.reduce((a,t)=>a+t[k],0)/l.length);
+  return {sys:m('sys'),dia:m('dia'),pul:m('pul'),n:l.length};
+}
+function sesiones(l){
+  const g=new Map();
+  for(const t of l){const k=t.at.slice(0,10)+'|'+t.momento;if(!g.has(k))g.set(k,[]);g.get(k).push(t)}
+  return [...g.entries()].map(([k,ts])=>({
+    ...promedio(ts),fecha:k.slice(0,10),momento:ts[0].momento,
+    t:ts.reduce((a,t)=>a+new Date(t.at).getTime(),0)/ts.length
+  })).sort((a,b)=>a.t-b.t);
+}
+function resumenDe(l){
+  if(!l.length) return null;
+  const asc=[...l].sort((a,b)=>a.at<b.at?-1:1);
+  const mayor=l.reduce((a,t)=>t.sys>a.sys||(t.sys===a.sys&&t.dia>a.dia)?t:a);
+  const menor=l.reduce((a,t)=>t.sys<a.sys||(t.sys===a.sys&&t.dia<a.dia)?t:a);
+  return {prom:promedio(l),man:promedio(l.filter(t=>t.momento==='manana')),tar:promedio(l.filter(t=>t.momento==='tarde')),
+    noc:promedio(l.filter(t=>t.momento==='noche')),mayor,menor,desde:asc[0].at,hasta:asc[asc.length-1].at,n:l.length};
+}
+function rachaDias(l,hoy){
+  const dias=new Set(l.map(t=>t.at.slice(0,10)));
+  const d=inicioDia(hoy||new Date());
+  if(!dias.has(diaISO(d))) d.setDate(d.getDate()-1);
+  let n=0;while(dias.has(diaISO(d))){n++;d.setDate(d.getDate()-1)}
+  return n;
+}
+const pa=p=>p?p.sys+'/'+p.dia:'—';
+
+/* ---------- Estado ---------- */
+const $=id=>document.getElementById(id);
+const estado={tomas:[],rango:'d7',cargando:true,modo:null,col:null,descargas:null,histLimite:30,editando:null,idPendiente:null,fechaManual:false,momentoManual:false,ultimo:null,hoy:diaISO(new Date())};
+function leerLocal(k,def){try{const v=localStorage.getItem(k);return v===null?def:v}catch(e){return def}}
+function escribirLocal(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}}
+function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function ponerTomas(lista){
+  estado.tomas=lista.filter(t=>t&&typeof t.at==='string'&&Number.isFinite(t.sys)&&Number.isFinite(t.dia)&&Number.isFinite(t.pul))
+    .sort((a,b)=>a.at<b.at?1:a.at>b.at?-1:0);
+  if(estado.tomas.length) escribirLocal('cartilla.hay','1');
+}
+function esperando(){return estado.cargando&&leerLocal('cartilla.hay','')==='1'}
+function filtradas(){const d=desdeRango(estado.rango);if(!d)return estado.tomas;const a=localISO(d);return estado.tomas.filter(t=>t.at>=a)}
+
+/* ---------- Guardado en este celular ---------- */
+const LOCAL_KEY='cartilla.tomas';
+function avisar(t,esAviso){const d=$('donde');d.textContent=t;d.classList.toggle('aviso',!!esAviso)}
+function cargarLocal(){
+  let datos=[],ok=true;
+  try{const raw=localStorage.getItem(LOCAL_KEY);datos=raw?JSON.parse(raw):[];if(!Array.isArray(datos))datos=[]}catch(e){ok=false}
+  ponerTomas(datos);estado.cargando=false;
+  if(ok) avisar('Tus tomas se guardan en este celular. Nadie más las ve.');
+  else avisar('Este navegador no me deja guardar datos. Revisa que no estés en una ventana privada.',true);
+}
+cargarLocal();
+const listoAlmacen=Promise.resolve();
+function persistir(){
+  if(!escribirLocal(LOCAL_KEY,JSON.stringify(estado.tomas))) throw {code:'local'};
+  if(!estado.pidioPersistir&&navigator.storage&&navigator.storage.persist){estado.pidioPersistir=true;navigator.storage.persist().catch(()=>{})}
+}
+async function escribir(id,doc){
+  const antes=estado.tomas;
+  ponerTomas(antes.filter(t=>t.id!==id).concat([Object.assign({id},doc)]));
+  try{persistir()}catch(e){estado.tomas=antes;throw e}
+  pintarTodo();
+}
+async function borrar(id){
+  const antes=estado.tomas;
+  ponerTomas(antes.filter(t=>t.id!==id));
+  try{persistir()}catch(e){estado.tomas=antes;throw e}
+  pintarTodo();
+}
+function mensajeError(e){
+  if(e&&e.code==='local') return 'No pude guardar en este celular. Revisa que no estés en una ventana privada y que el teléfono tenga espacio.';
+  return 'No pude guardar. Toca el botón otra vez; tus números siguen aquí.';
+}
+window.addEventListener('storage',ev=>{if(ev.key===LOCAL_KEY){cargarLocal();pintarTodo()}});
+
+/* ---------- Pantalla LCD ---------- */
+function hor(x1,x2,y,h){h=h||5;return [x1,y,x1+h,y-h,x2-h,y-h,x2,y,x2-h,y+h,x1+h,y+h].join(' ')}
+function ver(x,y1,y2,h){h=h||5;return [x,y1,x+h,y1+h,x+h,y2-h,x,y2,x-h,y2-h,x-h,y1+h].join(' ')}
+const SEG={a:hor(8.5,47.5,6),g:hor(8.5,47.5,50),d:hor(8.5,47.5,94),f:ver(7,7.5,48.5),b:ver(49,7.5,48.5),e:ver(7,51.5,92.5),c:ver(49,51.5,92.5)};
+const DIG={0:'abcdef',1:'bc',2:'abdeg',3:'abcdg',4:'bcfg',5:'acdfg',6:'acdefg',7:'abc',8:'abcdefg',9:'abcdfg'};
+const SVGNS='http://www.w3.org/2000/svg';
+function svgEl(tag,attrs,padre,txt){const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;if(padre)padre.appendChild(e);return e}
+function armarDigitos(id){
+  const c=$(id);
+  for(let i=0;i<3;i++){const s=svgEl('svg',{class:'dgt',viewBox:'0 0 56 100'},c);for(const k in SEG)svgEl('polygon',{points:SEG[k],'data-s':k,fill:'currentColor'},s)}
+}
+function pintarDigitos(id,val){
+  const txt=String(val||'').padStart(3,' ');
+  [...$(id).children].forEach((s,i)=>{const on=DIG[txt[i]]||'';s.querySelectorAll('polygon').forEach(p=>p.classList.toggle('on',on.includes(p.dataset.s)))});
+}
+function nivelEnVivo(){
+  const s=+$('sys').value,d=+$('dia').value;
+  return s>=50&&d>=30&&d<s?clasificar(s,d):null;
+}
+function refrescarLcd(){
+  pintarDigitos('dSys',$('sys').value);pintarDigitos('dDia',$('dia').value);pintarDigitos('dPul',$('pul').value);
+  const c=$('cuando').value;
+  $('lcdFecha').textContent=c?c.slice(8,10)+'/'+c.slice(5,7)+' '+c.slice(11,16):'--/-- --:--';
+  const m=document.querySelector('input[name=momento]:checked');
+  $('lcdMomento').textContent=m?MOMENTO[m.value].toUpperCase():'';
+  const n=nivelEnVivo();const paso=n?NIVELES[n].paso:0;
+  [...$('barras').children].forEach((b,i)=>b.classList.toggle('on',i<paso));
+  $('lcdNivel').textContent=n?NIVELES[n].largo:($('sys').value||$('dia').value)?'Completa SYS y DIA':'Toca SYS y escribe';
+  const vacio=!$('sys').value&&!$('dia').value;
+  $('alerta').hidden=!(n==='cri'||(vacio&&estado.ultimo&&estado.ultimo.nivel==='cri'));
+}
+
+/* ---------- Formulario ---------- */
+function ponerMomento(m){const r=document.querySelector('input[name=momento][value='+m+']');if(r)r.checked=true}
+function ponerBrazo(b){const r=document.querySelector('input[name=brazo][value='+b+']');if(r)r.checked=true}
+function verError(t){const e=$('error');e.textContent=t||'';e.hidden=!t}
+function verListo(nodos){const e=$('listo');e.textContent='';if(nodos){e.append(...nodos);e.hidden=false}else e.hidden=true}
+function limpiarForma(){
+  ['sys','dia','pul','nota'].forEach(k=>$(k).value='');
+  $('ihb').checked=false;$('med').checked=false;
+  estado.editando=null;estado.idPendiente=null;estado.fechaManual=false;estado.momentoManual=false;
+  const ahora=new Date();$('cuando').value=localISO(ahora);ponerMomento(momentoDe(ahora));
+  ponerBrazo(leerLocal('cartilla.brazo','izq'));
+  $('edicion').hidden=true;$('accionesEdicion').hidden=true;$('confirmarBorrado').hidden=true;$('guardar').textContent='Guardar toma';
+  verError('');refrescarLcd();
+}
+let cuenta=null;
+function iniciarCuenta(t){
+  clearInterval(cuenta);const fin=Date.now()+60000;
+  const pintar=()=>{
+    const r=Math.ceil((fin-Date.now())/1000);
+    const b=el('b',null,t+' ');
+    if(r<=0){clearInterval(cuenta);verListo([b,'Ya puedes repetir la toma si te toca.'])}
+    else verListo([b,'Si vas a repetirla, espera 1 minuto: '+(r>=60?'1:00':'0:'+pad(r))])
+  };
+  pintar();cuenta=setInterval(pintar,1000);
+}
+function leerForma(){
+  const n=k=>parseInt($(k).value,10)||0;
+  return {sys:n('sys'),dia:n('dia'),pul:n('pul'),at:$('cuando').value,
+    momento:document.querySelector('input[name=momento]:checked').value,
+    brazo:document.querySelector('input[name=brazo]:checked').value,
+    ihb:$('ihb').checked,med:$('med').checked,nota:$('nota').value.trim()};
+}
+const SIGUIENTE={sys:'dia',dia:'pul'};
+['sys','dia','pul'].forEach(k=>{
+  const i=$(k);
+  i.addEventListener('input',e=>{
+    i.value=i.value.replace(/\D/g,'').slice(0,3);
+    verError('');refrescarLcd();
+    if(!(e.inputType||'insert').startsWith('insert')||!SIGUIENTE[k]) return;
+    const v=+i.value;
+    if(i.value.length===3||(k==='dia'&&i.value.length===2&&v>=40)) $(SIGUIENTE[k]).focus();
+  });
+  i.addEventListener('focus',()=>i.select());
+  i.addEventListener('keydown',e=>{if(e.key==='Enter'&&SIGUIENTE[k]){e.preventDefault();$(SIGUIENTE[k]).focus()}});
+});
+$('cuando').addEventListener('input',()=>{
+  estado.fechaManual=true;
+  const c=$('cuando').value;
+  if(c&&!estado.momentoManual) ponerMomento(momentoDe(new Date(c)));
+  refrescarLcd();
+});
+document.querySelectorAll('input[name=momento]').forEach(r=>r.addEventListener('change',()=>{estado.momentoManual=true;refrescarLcd()}));
+document.querySelectorAll('input[name=brazo]').forEach(r=>r.addEventListener('change',()=>{if(!estado.editando)escribirLocal('cartilla.brazo',r.value)}));
+$('forma').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const v=leerForma();const err=validar(v);
+  if(err){verError(err.msg);$(err.campo).focus();return}
+  verError('');
+  const btn=$('guardar');const texto=btn.textContent;btn.disabled=true;btn.textContent='Guardando…';
+  const editando=estado.editando;
+  const id=editando||estado.idPendiente||('t'+v.at.replace(/\D/g,'')+'-'+Math.random().toString(36).slice(2,8));
+  estado.idPendiente=id;
+  const previa=estado.tomas.find(t=>t.id===id);
+  const doc=Object.assign({},v,{creado:previa&&previa.creado||new Date().toISOString()});
+  try{
+    await escribir(id,doc);
+    estado.ultimo={nivel:clasificar(v.sys,v.dia)};
+    btn.disabled=false;
+    limpiarForma();
+    if(document.activeElement&&document.activeElement.blur) document.activeElement.blur();
+    if(editando){clearInterval(cuenta);verListo([el('b',null,'Cambios guardados.')])}
+    else iniciarCuenta('Guardada: '+v.sys+'/'+v.dia+', pulso '+v.pul+'.');
+  }catch(ex){
+    btn.textContent=texto;btn.disabled=false;
+    verError(mensajeError(ex));
+  }
+});
+function editar(id){
+  const t=estado.tomas.find(x=>x.id===id);if(!t)return;
+  estado.editando=id;estado.fechaManual=true;estado.momentoManual=true;estado.ultimo=null;
+  $('sys').value=t.sys;$('dia').value=t.dia;$('pul').value=t.pul;$('nota').value=t.nota||'';
+  $('cuando').value=t.at;ponerMomento(t.momento);ponerBrazo(t.brazo||'izq');
+  $('ihb').checked=!!t.ihb;$('med').checked=!!t.med;
+  $('edicion').textContent='Editando la toma del '+etiquetaDia(t.at.slice(0,10))+', '+t.at.slice(11,16);
+  $('edicion').hidden=false;$('accionesEdicion').hidden=false;$('confirmarBorrado').hidden=true;
+  $('guardar').textContent='Guardar cambios';
+  clearInterval(cuenta);verListo(null);verError('');refrescarLcd();
+  const suave=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+  $('forma').scrollIntoView({behavior:suave?'smooth':'auto',block:'start'});
+}
+$('cancelar').addEventListener('click',()=>{limpiarForma();verListo(null)});
+$('eliminar').addEventListener('click',()=>{$('accionesEdicion').hidden=true;$('confirmarBorrado').hidden=false});
+$('noEliminar').addEventListener('click',()=>{$('confirmarBorrado').hidden=true;$('accionesEdicion').hidden=false});
+$('siEliminar').addEventListener('click',async()=>{
+  const id=estado.editando;
+  try{
+    await borrar(id);limpiarForma();
+    clearInterval(cuenta);verListo([el('b',null,'Toma eliminada.')]);
+  }catch(ex){verError('No pude eliminarla. Revisa tu conexión e inténtalo otra vez.')}
+});
+
+/* ---------- Cartilla ---------- */
+function pintarHoy(){
+  const hoy=diaISO(new Date());
+  const deHoy=estado.tomas.filter(t=>t.at.startsWith(hoy));
+  const h=$('tHoy');h.textContent='';
+  if(esperando()&&!estado.tomas.length) h.append('Cargando tus tomas…');
+  else if(!deHoy.length) h.append('Hoy aún no registras tu presión.');
+  else{
+    const mom=[...new Set(deHoy.map(t=>MOMENTO[t.momento].toLowerCase()))].join(' y ');
+    h.append('Hoy llevas '+deHoy.length+(deHoy.length===1?' toma':' tomas')+': '+mom+'.');
+  }
+  const racha=rachaDias(estado.tomas);
+  if(racha>=2) h.append(el('small',null,racha+' días seguidos registrando.'));
+  const c=$('dias');c.textContent='';
+  const lim=inicioDia(new Date());
+  for(let i=13;i>=0;i--){
+    const d=new Date(lim);d.setDate(d.getDate()-i);const iso=diaISO(d);
+    const ts=estado.tomas.filter(t=>t.at.startsWith(iso));
+    const cel=el('div','dia'+(i===0?' es-hoy':''));
+    const p=promedio(ts);
+    if(p) cel.dataset.n=clasificar(p.sys,p.dia);
+    cel.title=etiquetaDia(iso)+': '+(p?pa(p)+', '+ts.length+(ts.length===1?' toma':' tomas'):'sin tomas');
+    cel.append(el('i'),el('span',null,INICIAL[d.getDay()]));
+    c.append(cel);
+  }
+  const con=[...c.children].filter(x=>x.dataset.n).length;
+  c.setAttribute('aria-label','Tomas registradas en '+con+' de los últimos 14 días.');
+}
+function pintarResumen(){
+  const l=filtradas();const r=resumenDe(l);
+  $('resEt').textContent=RANGOS[estado.rango]?'Promedio de '+etiquetaRango(estado.rango):'Promedio de todas tus tomas';
+  $('resDatos').hidden=!r;$('resVacio').hidden=!!r;
+  const pill=$('resPill');
+  if(!r){
+    $('resVal').textContent='--/--';pill.hidden=true;
+    $('resVacio').textContent=esperando()?'Cargando tus tomas…':estado.tomas.length?'No hay tomas en este periodo. Prueba con un periodo más largo.':'Cuando registres tu primera toma verás aquí tu promedio.';
+    return;
+  }
+  $('resVal').textContent=pa(r.prom);
+  const n=clasificar(r.prom.sys,r.prom.dia);
+  pill.hidden=false;pill.dataset.n=n;pill.textContent=NIVELES[n].largo;
+  $('resPul').textContent=r.prom.pul+' lpm';
+  $('resMan').textContent=pa(r.man);$('resNoc').textContent=pa(r.noc);$('resN').textContent=r.n;
+}
+function pintarHistorial(){
+  const l=filtradas();const c=$('historial');c.textContent='';
+  const v=$('histVacio');v.hidden=l.length>0;
+  v.textContent=esperando()?'Cargando tus tomas…':estado.tomas.length?'No hay tomas en este periodo. Prueba con un periodo más largo.':'Aquí aparecerá cada toma con su fecha, hora y clasificación. Llena los números de tu tensiómetro y toca Guardar toma.';
+  let dia=null,lista=null;
+  for(const t of l.slice(0,estado.histLimite)){
+    const f=t.at.slice(0,10);
+    if(f!==dia){
+      dia=f;const g=el('section','grupo');
+      g.append(el('h3',null,etiquetaDia(f)));lista=el('ul');g.append(lista);c.append(g);
+    }
+    const li=el('li','toma');
+    const h=el('div','t-hora');h.append(t.at.slice(11,16),el('small',null,MOMENTO[t.momento]||''));
+    const val=el('div','t-val');val.append(el('b',null,t.sys+'/'+t.dia),el('span',null,t.pul+' lpm'));
+    const n=clasificar(t.sys,t.dia);const pill=el('span','pill',NIVELES[n].corto);pill.dataset.n=n;pill.title=NIVELES[n].largo;
+    const extra=el('div','t-extra');
+    const det=['Brazo '+(t.brazo==='der'?'der.':'izq.')];
+    if(t.med)det.push('Medicación tomada');
+    if(t.ihb)det.push('Latido irregular');
+    if(t.nota)det.push(t.nota);
+    const btn=el('button','enlace','Editar');btn.type='button';btn.setAttribute('aria-label','Editar la toma de las '+t.at.slice(11,16)+' del '+etiquetaDia(f));
+    btn.addEventListener('click',()=>editar(t.id));
+    extra.append(el('span',null,det.join(' · ')),btn);
+    li.append(h,val,pill,extra);lista.append(li);
+  }
+  $('verMas').hidden=l.length<=estado.histLimite;
+  const i=$('repInfo');
+  i.textContent=l.length?'Incluye '+l.length+(l.length===1?' toma':' tomas')+' de '+etiquetaRango(estado.rango)+'. Cambia el periodo arriba para incluir más.':'Aún no hay tomas en este periodo. Cuando las tengas podrás copiarlas o descargarlas.';
+}
+
+/* ---------- Gráfico ---------- */
+function sesionesEjemplo(){
+  const base=[[134,86,76],[128,82,72],[131,84,74],[126,80,70],[129,83,73],[124,79,71],[127,81,69],[122,78,70],[125,80,72],[121,77,68]];
+  const h=Date.now();
+  return base.map((v,i)=>({t:h-(base.length-1-i)*864e5,sys:v[0],dia:v[1],pul:v[2],n:1,fecha:'',momento:''}));
+}
+function pasoTicks(lo,hi,paso){const r=[];for(let v=lo;v<=hi;v+=paso)r.push(v);return r}
+function pintarGrafico(){
+  const caja=$('grafico');
+  const ej=estado.tomas.length===0&&!esperando();
+  const pts=ej?sesionesEjemplo():sesiones(filtradas());
+  $('grafEjemplo').hidden=!ej;
+  $('grafVacio').hidden=ej||pts.length>0||esperando();
+  $('grafCuerpo').hidden=!ej&&pts.length===0&&!esperando();
+  caja.textContent='';
+  if(!pts.length) return;
+  const W=Math.max(280,caja.clientWidth||640);
+  const M={l:34,r:36,t:10};const H1=W<520?190:240,G=34,H2=70,B=24;
+  const yTop2=M.t+H1+G,H=yTop2+H2+B;
+  const ahora=Date.now();
+  let t0=pts[0].t,t1=pts[pts.length-1].t;
+  if(!ej&&RANGOS[estado.rango]){t0=desdeRango(estado.rango).getTime();t1=Math.max(ahora,t1)}
+  if(t1-t0<864e5){const c=(t0+t1)/2;t0=c-432e5;t1=c+432e5}
+  const x=t=>M.l+(t-t0)/(t1-t0)*(W-M.l-M.r);
+  const lo=Math.floor(Math.min(60,Math.min(...pts.map(p=>p.dia))-5)/20)*20;
+  const hi=Math.ceil(Math.max(150,Math.max(...pts.map(p=>p.sys))+5)/20)*20;
+  const y1=v=>M.t+(hi-v)/(hi-lo)*H1;
+  const lo2=Math.floor(Math.min(50,Math.min(...pts.map(p=>p.pul))-5)/10)*10;
+  const hi2=Math.ceil(Math.max(90,Math.max(...pts.map(p=>p.pul))+5)/10)*10;
+  const y2=v=>yTop2+(hi2-v)/(hi2-lo2)*H2;
+  const ult=pts[pts.length-1];
+  const svg=svgEl('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':ej?'Gráfico de ejemplo de presión y pulso':'Presión y pulso por sesión. Última sesión: '+ult.sys+' sobre '+ult.dia+', pulso '+ult.pul+'. Usa las flechas para recorrer los puntos.'},caja);
+  /* Rejillas */
+  for(const v of pasoTicks(lo,hi,hi-lo>160?40:20)){
+    svgEl('line',{x1:M.l,x2:W-M.r,y1:y1(v),y2:y1(v),class:'g-rej'},svg);
+    svgEl('text',{x:M.l-6,y:y1(v)+4,'text-anchor':'end',class:'eje'},svg,v);
+  }
+  svgEl('text',{x:M.l,y:yTop2-9,class:'t-graf'},svg,'Pulso, lpm');
+  for(const v of [lo2,hi2]){
+    svgEl('line',{x1:M.l,x2:W-M.r,y1:y2(v),y2:y2(v),class:'g-rej'},svg);
+    svgEl('text',{x:M.l-6,y:y2(v)+4,'text-anchor':'end',class:'eje'},svg,v);
+  }
+  /* Eje de tiempo: de hoy hacia atrás */
+  const spanDias=(t1-t0)/864e5;
+  const paso=Math.max(1,Math.ceil(spanDias/(W<520?4:6)));
+  let d=inicioDia(new Date(t1));
+  const baseX=yTop2+H2+16;
+  while(d.getTime()>=t0-1){
+    const px=x(d.getTime());
+    if(px>=M.l-1) svgEl('text',{x:px,y:baseX,'text-anchor':'middle',class:'eje'},svg,d.getDate()+' '+MESES[d.getMonth()]);
+    d=new Date(d);d.setDate(d.getDate()-paso);
+  }
+  /* Límites de presión alta */
+  svgEl('line',{x1:M.l,x2:W-M.r,y1:y1(130),y2:y1(130),class:'g-ref'},svg);
+  svgEl('line',{x1:M.l,x2:W-M.r,y1:y1(80),y2:y1(80),class:'g-ref'},svg);
+  const g=svgEl('g',ej?{class:'apagado'}:{},svg);
+  /* Series */
+  if(pts.length>1){
+    const banda=pts.map(p=>x(p.t)+','+y1(p.sys)).concat(pts.slice().reverse().map(p=>x(p.t)+','+y1(p.dia))).join(' ');
+    svgEl('polygon',{points:banda,class:'banda'},g);
+    const linea=(k,y)=>'M'+pts.map(p=>x(p.t).toFixed(1)+' '+y(p[k]).toFixed(1)).join('L');
+    svgEl('path',{d:linea('sys',y1),class:'l-sys'},g);
+    svgEl('path',{d:linea('dia',y1),class:'l-dia'},g);
+    svgEl('path',{d:linea('pul',y2),class:'l-pul'},g);
+  }
+  const conPuntos=pts.length<=31;
+  for(const p of conPuntos?pts:[ult]){
+    svgEl('circle',{cx:x(p.t),cy:y1(p.sys),r:4,class:'p-sys'},g);
+    svgEl('circle',{cx:x(p.t),cy:y1(p.dia),r:4,class:'p-dia'},g);
+    svgEl('circle',{cx:x(p.t),cy:y2(p.pul),r:4,class:'p-pul'},g);
+  }
+  svgEl('text',{x:M.l+4,y:y1(130)-5,class:'ref'},svg,'SYS: alta desde 130');
+  svgEl('text',{x:M.l+4,y:y1(80)+14,class:'ref'},svg,'DIA: alta desde 80');
+  if(!ej){
+    const fx=x(ult.t)+8;
+    svgEl('text',{x:fx,y:y1(ult.sys)+4.5,class:'fin'},svg,ult.sys);
+    svgEl('text',{x:fx,y:y1(ult.dia)+4.5,class:'fin'},svg,ult.dia);
+    svgEl('text',{x:fx,y:y2(ult.pul)+4.5,class:'fin'},svg,ult.pul);
+  }
+  if(ej) return;
+  /* Lectura al pasar el dedo o el cursor */
+  const cruz=svgEl('line',{y1:M.t,y2:yTop2+H2,class:'cruz',visibility:'hidden'},svg);
+  const mS=svgEl('circle',{r:5,class:'p-sys',visibility:'hidden'},svg),mD=svgEl('circle',{r:5,class:'p-dia',visibility:'hidden'},svg),mP=svgEl('circle',{r:5,class:'p-pul',visibility:'hidden'},svg);
+  const capa=svgEl('rect',{x:M.l-8,y:0,width:W-M.l-M.r+16,height:H,fill:'transparent',class:'capa'},svg);
+  const tip=el('div','tip');tip.hidden=true;caja.append(tip);
+  let sel=-1;
+  function ver_(i){
+    sel=i;const p=pts[i];const px=x(p.t);
+    [cruz].forEach(c=>{c.setAttribute('x1',px);c.setAttribute('x2',px);c.setAttribute('visibility','visible')});
+    [[mS,y1(p.sys)],[mD,y1(p.dia)],[mP,y2(p.pul)]].forEach(([m,cy])=>{m.setAttribute('cx',px);m.setAttribute('cy',cy);m.setAttribute('visibility','visible')});
+    tip.textContent='';
+    tip.append(el('div','tip-f',etiquetaDia(p.fecha)+' · '+(MOMENTO[p.momento]||'').toLowerCase()+(p.n>1?' · '+p.n+' tomas':'')));
+    for(const[v,nom,col]of[[p.sys,'SYS','--sys'],[p.dia,'DIA','--dia'],[p.pul,'lpm','--pul']]){
+      const r=el('div','tip-r');const k=el('i');k.style.background='var('+col+')';r.append(k,el('b',null,v),el('span',null,nom));tip.append(r);
+    }
+    tip.hidden=false;
+    const ww=tip.offsetWidth;
+    tip.style.left=(px>W/2?Math.max(0,px-ww-12):Math.min(W-ww,px+12))+'px';
+  }
+  function ocultar(){sel=-1;cruz.setAttribute('visibility','hidden');[mS,mD,mP].forEach(m=>m.setAttribute('visibility','hidden'));tip.hidden=true}
+  function cercano(ev){
+    const r=svg.getBoundingClientRect();const px=(ev.clientX-r.left)*(W/r.width);
+    let m=0,dm=Infinity;pts.forEach((p,i)=>{const dd=Math.abs(x(p.t)-px);if(dd<dm){dm=dd;m=i}});return m;
+  }
+  capa.addEventListener('pointermove',ev=>ver_(cercano(ev)));
+  capa.addEventListener('pointerdown',ev=>ver_(cercano(ev)));
+  capa.addEventListener('pointerleave',ocultar);
+  capa.addEventListener('pointercancel',ocultar);
+  svg.setAttribute('tabindex','0');
+  svg.addEventListener('keydown',ev=>{
+    if(ev.key==='ArrowLeft'||ev.key==='ArrowRight'){
+      ev.preventDefault();
+      const b=sel<0?pts.length-1:sel+(ev.key==='ArrowLeft'?-1:1);
+      ver_(Math.max(0,Math.min(pts.length-1,b)));
+    }else if(ev.key==='Escape') ocultar();
+  });
+  svg.addEventListener('blur',ocultar);
+}
+function pintarTodo(){if(!estado.cargando&&!estado.tomas.length)escribirLocal('cartilla.hay','');pintarHoy();pintarResumen();pintarGrafico();pintarHistorial();pintarCopia()}
+
+/* ---------- Reporte ---------- */
+function celdaCsv(v){let s=String(v==null?'':v);if(/^[=+\-@]/.test(s))s="'"+s;return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
+function csvDe(l){
+  const filas=[['Fecha','Hora','Momento','SYS (mmHg)','DIA (mmHg)','Pulso (lpm)','Brazo','Clasificación','Medicación tomada','Latido irregular','Nota']];
+  for(const t of [...l].sort((a,b)=>a.at<b.at?-1:1)){
+    filas.push([fechaCorta(t.at),t.at.slice(11,16),MOMENTO[t.momento]||'',t.sys,t.dia,t.pul,BRAZO[t.brazo]||'',NIVELES[clasificar(t.sys,t.dia)].largo,t.med?'Sí':'',t.ihb?'Sí':'',t.nota||'']);
+  }
+  return '﻿'+filas.map(f=>f.map(celdaCsv).join(',')).join('\r\n')+'\r\n';
+}
+function lineasResumen(r,nombre){
+  const out=[];
+  if(nombre) out.push('Nombre: '+nombre);
+  out.push('Periodo: '+fechaCorta(r.desde)+' al '+fechaCorta(r.hasta)+' ('+r.n+(r.n===1?' toma':' tomas')+')');
+  out.push('Promedio: '+pa(r.prom)+' mmHg, pulso '+r.prom.pul+' lpm ('+NIVELES[clasificar(r.prom.sys,r.prom.dia)].largo+')');
+  const m=[];if(r.man)m.push('Mañanas '+pa(r.man));if(r.tar)m.push('Tardes '+pa(r.tar));if(r.noc)m.push('Noches '+pa(r.noc));
+  if(m.length) out.push(m.join(' · '));
+  out.push('Más alta: '+r.mayor.sys+'/'+r.mayor.dia+' ('+fechaCorta(r.mayor.at)+') · Más baja: '+r.menor.sys+'/'+r.menor.dia+' ('+fechaCorta(r.menor.at)+')');
+  return out;
+}
+function extrasDe(t){const e=[];if(t.med)e.push('Medicación tomada');if(t.ihb)e.push('Latido irregular');if(t.nota)e.push(t.nota);return e.join(' · ')}
+function textoDe(l,nombre){
+  const r=resumenDe(l);
+  const out=['CONTROL DE PRESIÓN ARTERIAL'].concat(lineasResumen(r,nombre),['']);
+  for(const t of [...l].sort((a,b)=>a.at<b.at?-1:1)){
+    const ex=extrasDe(t);
+    out.push(fechaCorta(t.at)+' '+t.at.slice(11,16)+' '+(MOMENTO[t.momento]||'')+': '+t.sys+'/'+t.dia+', pulso '+t.pul+', brazo '+(t.brazo==='der'?'der.':'izq.')+(ex?' ('+ex+')':''));
+  }
+  return out.join('\n');
+}
+function msgReporte(t,err){const m=$('repMsg');m.textContent=t||'';m.hidden=!t;m.classList.toggle('error',!!err);m.classList.toggle('listo',!err)}
+function nombreRep(){return $('nombre').value.trim()}
+function nombreArchivo(ext){return 'presion-'+diaISO(new Date())+'.'+ext}
+$('copiar').addEventListener('click',()=>{
+  const l=filtradas();
+  if(!l.length){msgReporte('No hay tomas en este periodo. Elige uno más largo.',true);return}
+  const txt=textoDe(l,nombreRep());const ta=$('textoReporte');
+  const manual=()=>{ta.value=txt;ta.hidden=false;ta.focus();ta.select();msgReporte('Selecciona el texto de abajo y cópialo.')};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>{ta.hidden=true;msgReporte('Resumen copiado. Pégalo en WhatsApp o en un correo para tu médico.')},manual);
+  }else manual();
+});
+const ES_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const TIPOS={pdf:'application/pdf',csv:'text/csv;charset=utf-8',json:'application/json'};
+function archivo(nombre,data){return new File([data],nombre,{type:TIPOS[nombre.split('.').pop()]||'application/octet-stream'})}
+function puedeCompartir(f){try{return !!(navigator.share&&navigator.canShare&&navigator.canShare({files:[f]}))}catch(e){return false}}
+function descargar(f){
+  const u=URL.createObjectURL(f);const a=document.createElement('a');
+  a.href=u;a.download=f.name;a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),30000);
+}
+async function compartirArchivo(f,titulo){
+  try{await navigator.share({files:[f],title:titulo||f.name});return true}
+  catch(e){
+    if(e&&e.name==='AbortError') return false;
+    if(e&&e.name==='NotAllowedError'){
+      estado.archivoListo=f;const b=$('enviarListo');b.textContent='Enviar '+f.name;b.hidden=false;
+      msgReporte('El archivo está listo. Toca el botón azul para enviarlo.');return false;
+    }
+    throw e;
+  }
+}
+async function guardarArchivo(nombre,data){
+  const f=archivo(nombre,data);
+  try{
+    if(ES_IOS&&puedeCompartir(f)){if(await compartirArchivo(f))msgReporte('');return}
+    descargar(f);msgReporte('Listo: '+nombre+'. Lo encuentras en tus descargas.');
+  }catch(e){msgReporte('No pude guardar el archivo. Inténtalo otra vez o usa Copiar resumen.',true)}
+}
+$('bajarCsv').addEventListener('click',()=>{
+  const l=filtradas();
+  if(!l.length){msgReporte('No hay tomas en este periodo. Elige uno más largo.',true);return}
+  guardarArchivo(nombreArchivo('csv'),csvDe(l));
+});
+function cargarPdfLib(){
+  if(window.PDFLib) return Promise.resolve(window.PDFLib);
+  const fuentes=['./pdf-lib.min.js','https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js','https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js'];
+  return fuentes.reduce((p,src)=>p.catch(()=>new Promise((ok,no)=>{
+    const s=document.createElement('script');s.src=src;s.onload=()=>window.PDFLib?ok(window.PDFLib):no();s.onerror=no;document.head.appendChild(s);
+  })),Promise.reject());
+}
+async function pdfDe(l,nombre){
+  const{PDFDocument,StandardFonts,rgb}=await cargarPdfLib();
+  const pdf=await PDFDocument.create();pdf.setTitle('Control de presión arterial');
+  const f=await pdf.embedFont(StandardFonts.Helvetica),fb=await pdf.embedFont(StandardFonts.HelveticaBold);
+  const AN=595.28,AL=841.89,M=44,tinta=rgb(.09,.13,.18),gris=rgb(.34,.39,.46),azul=rgb(.137,.247,.471),raya=rgb(.82,.85,.89);
+  const limpio=t=>String(t).normalize('NFC').replace(/[^\x20-\x7E\xA0-\xFF]/g,'').trim();
+  const COL=[['Fecha',0],['Hora',64],['Momento',104],['SYS',166],['DIA',202],['Pulso',238],['Brazo',282],['Clasificación',344]];
+  let pag,y;
+  const nueva=()=>{pag=pdf.addPage([AN,AL]);y=AL-M};
+  const txt=(t,x,yy,o)=>pag.drawText(limpio(t),Object.assign({x,y:yy,size:10,font:f,color:tinta},o||{}));
+  const cabTabla=()=>{
+    COL.forEach(([n,dx])=>txt(n,M+dx,y,{font:fb,size:9,color:gris}));
+    y-=6;pag.drawLine({start:{x:M,y},end:{x:AN-M,y},thickness:1,color:gris});y-=14;
+  };
+  const partir=(t,ancho,size)=>{
+    const out=[];let lin='';
+    for(const w of limpio(t).split(/\s+/)){
+      const pr=lin?lin+' '+w:w;
+      if(f.widthOfTextAtSize(pr,size)>ancho&&lin){out.push(lin);lin=w}else lin=pr;
+    }
+    if(lin)out.push(lin);return out;
+  };
+  nueva();
+  txt('Control de presión arterial',M,y-6,{font:fb,size:20,color:azul});y-=32;
+  const r=resumenDe(l);
+  for(const ln of lineasResumen(r,nombre)){txt(ln,M,y,{size:11});y-=16}
+  y-=10;cabTabla();
+  for(const t of [...l].sort((a,b)=>a.at<b.at?-1:1)){
+    const ex=extrasDe(t);const lineas=ex?partir(ex,AN-2*M-8,9):[];
+    if(y-(lineas.length*12)<M+24){nueva();cabTabla()}
+    const n=clasificar(t.sys,t.dia);
+    [fechaCorta(t.at),t.at.slice(11,16),MOMENTO[t.momento]||'',t.sys,t.dia,t.pul,BRAZO[t.brazo]||'',NIVELES[n].largo].forEach((v,i)=>{
+      txt(v,M+COL[i][1],y,i===3||i===4?{font:fb}:(i===7&&(n==='e2'||n==='cri')?{font:fb}:{}));
+    });
+    y-=5;
+    for(const ln of lineas){y-=7;txt(ln,M+8,y,{size:9,color:gris});y-=5}
+    pag.drawLine({start:{x:M,y},end:{x:AN-M,y},thickness:.5,color:raya});y-=13;
+  }
+  const pags=pdf.getPages();
+  pags.forEach((p,i)=>{
+    p.drawText(limpio('Valores registrados en casa por el paciente. Categorías: American Heart Association, adultos.'),{x:M,y:28,size:8,font:f,color:gris});
+    const num=(i+1)+' / '+pags.length;
+    p.drawText(num,{x:AN-M-f.widthOfTextAtSize(num,8),y:28,size:8,font:f,color:gris});
+  });
+  return pdf.save();
+}
+$('bajarPdf').addEventListener('click',async()=>{
+  const l=filtradas();
+  if(!l.length){msgReporte('No hay tomas en este periodo. Elige uno más largo.',true);return}
+  const b=$('bajarPdf');b.disabled=true;msgReporte('Preparando el PDF…');
+  try{const bytes=await pdfDe(l,nombreRep());await guardarArchivo(nombreArchivo('pdf'),bytes)}
+  catch(e){msgReporte('No pude preparar el PDF. Inténtalo otra vez.',true)}
+  b.disabled=false;
+});
+
+/* ---------- Arranque ---------- */
+document.querySelectorAll('input[name=rango]').forEach(r=>r.addEventListener('change',()=>{
+  estado.rango=r.value;estado.histLimite=30;escribirLocal('cartilla.rango',r.value);pintarTodo();
+}));
+$('verMas').addEventListener('click',()=>{estado.histLimite+=50;pintarHistorial()});
+$('nombre').addEventListener('change',()=>escribirLocal('cartilla.nombre',$('nombre').value.trim()));
+['dSys','dDia','dPul'].forEach(armarDigitos);
+$('nombre').value=leerLocal('cartilla.nombre','');
+const rangoGuardado=leerLocal('cartilla.rango','d7');
+if(RANGOS.hasOwnProperty(rangoGuardado)){estado.rango=rangoGuardado;const r=document.querySelector('input[name=rango][value='+rangoGuardado+']');if(r)r.checked=true}
+limpiarForma();
+pintarTodo();
+let anchoPrevio=0;
+if(window.ResizeObserver){
+  new ResizeObserver(es=>{const w=Math.round(es[0].contentRect.width);if(w&&w!==anchoPrevio){anchoPrevio=w;pintarGrafico()}}).observe($('grafico'));
+}
+setInterval(()=>{
+  const hoy=diaISO(new Date());
+  if(hoy!==estado.hoy){estado.hoy=hoy;pintarTodo()}
+  if(!estado.fechaManual&&!estado.editando){
+    const a=new Date();$('cuando').value=localISO(a);
+    if(!estado.momentoManual) ponerMomento(momentoDe(a));
+    refrescarLcd();
+  }
+},20000);
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  const lcd=$('lcd');lcd.classList.add('prueba');setTimeout(()=>lcd.classList.remove('prueba'),450);
+}
+
+/* ---------- Enviar PDF ---------- */
+if(puedeCompartir(archivo('prueba.pdf','x'))) $('enviarPdf').hidden=false;
+$('enviarPdf').addEventListener('click',async()=>{
+  const l=filtradas();
+  if(!l.length){msgReporte('No hay tomas en este periodo. Elige uno más largo.',true);return}
+  const b=$('enviarPdf');b.disabled=true;msgReporte('Preparando el PDF…');
+  try{const f=archivo(nombreArchivo('pdf'),await pdfDe(l,nombreRep()));if(await compartirArchivo(f,'Control de presión arterial'))msgReporte('')}
+  catch(e){msgReporte('No pude enviar el PDF. Usa Descargar PDF.',true)}
+  b.disabled=false;
+});
+$('enviarListo').addEventListener('click',async()=>{
+  const f=estado.archivoListo;if(!f)return;
+  $('enviarListo').hidden=true;estado.archivoListo=null;
+  try{await navigator.share({files:[f],title:f.name});msgReporte('')}
+  catch(e){if(!(e&&e.name==='AbortError'))msgReporte('No pude enviarlo. Usa Descargar PDF.',true)}
+});
+
+/* ---------- Copia de seguridad ---------- */
+function msgCopia(t,err){const m=$('copiaMsg');m.textContent=t||'';m.hidden=!t;m.classList.toggle('error',!!err);m.classList.toggle('listo',!err)}
+function pintarCopia(){
+  const e=$('copiaEstado');const u=leerLocal('cartilla.ultimaCopia','');const n=estado.tomas.length;
+  e.classList.remove('aviso-copia');
+  if(!u){e.hidden=!n;e.textContent='Aún no guardas ninguna copia.';if(n>=10)e.classList.add('aviso-copia');return}
+  const dias=Math.max(0,Math.round((inicioDia(new Date())-inicioDia(new Date(u)))/864e5));
+  e.hidden=false;e.textContent='Última copia: '+(dias===0?'hoy':dias===1?'ayer':'hace '+dias+' días')+'.';
+  if(dias>30&&n){e.classList.add('aviso-copia');e.textContent+=' Te recomiendo guardar una nueva.'}
+}
+function marcarCopia(){escribirLocal('cartilla.ultimaCopia',new Date().toISOString());pintarCopia();msgCopia('Copia lista. Guárdala en Google Drive, en tu correo o envíatela por WhatsApp.')}
+$('guardarCopia').addEventListener('click',async()=>{
+  if(!estado.tomas.length){msgCopia('Todavía no hay tomas para guardar.',true);return}
+  const f=archivo('copia-presion-'+diaISO(new Date())+'.json',JSON.stringify({app:'mi-cartilla-presion',formato:1,creado:new Date().toISOString(),tomas:estado.tomas}));
+  if(puedeCompartir(f)){
+    try{await navigator.share({files:[f],title:'Copia de mi cartilla de presión'});marcarCopia();return}
+    catch(e){if(e&&e.name==='AbortError')return}
+  }
+  try{descargar(f);marcarCopia()}catch(e){msgCopia('No pude preparar la copia. Inténtalo otra vez.',true)}
+});
+function normalizar(t){
+  if(!t||typeof t!=='object') return null;
+  const at=typeof t.at==='string'&&/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(t.at)?t.at:null;
+  const num=k=>Number.isFinite(t[k])?Math.round(t[k]):parseInt(t[k],10)||0;
+  const v={sys:num('sys'),dia:num('dia'),pul:num('pul'),at,
+    momento:MOMENTO[t.momento]?t.momento:(at?momentoDe(new Date(at)):'manana'),
+    brazo:t.brazo==='der'?'der':'izq',ihb:!!t.ihb,med:!!t.med,nota:typeof t.nota==='string'?t.nota.slice(0,200):''};
+  if(validar(v,Infinity)) return null;
+  const id=typeof t.id==='string'&&/^[\w.-]{1,80}$/.test(t.id)?t.id:'t'+at.replace(/\D/g,'')+'-'+Math.random().toString(36).slice(2,8);
+  return Object.assign({id},v,{creado:typeof t.creado==='string'?t.creado:new Date().toISOString()});
+}
+$('restaurar').addEventListener('click',()=>$('archivoCopia').click());
+$('archivoCopia').addEventListener('change',async ev=>{
+  const f=ev.target.files&&ev.target.files[0];ev.target.value='';
+  if(!f) return;
+  let lista=null;
+  try{const j=JSON.parse(await f.text());lista=Array.isArray(j)?j:(j&&Array.isArray(j.tomas)?j.tomas:null)}catch(e){}
+  if(!lista){msgCopia('Ese archivo no es una copia de esta cartilla. Elige el archivo que empieza con copia-presion.',true);return}
+  const ids=new Set(estado.tomas.map(t=>t.id));
+  const claves=new Set(estado.tomas.map(t=>t.at+'|'+t.sys+'|'+t.dia+'|'+t.pul));
+  const nuevas=[];let repetidas=0;
+  for(const t of lista){
+    const n=normalizar(t);if(!n) continue;
+    const k=n.at+'|'+n.sys+'|'+n.dia+'|'+n.pul;
+    if(ids.has(n.id)||claves.has(k)){repetidas++;continue}
+    ids.add(n.id);claves.add(k);nuevas.push(n);
+  }
+  if(!nuevas.length){msgCopia(repetidas?'Esa copia no trae tomas nuevas: ya estaban todas.':'No encontré tomas válidas en ese archivo.',!repetidas);return}
+  const antes=estado.tomas;ponerTomas(antes.concat(nuevas));
+  try{persistir()}catch(e){estado.tomas=antes;msgCopia(mensajeError(e),true);return}
+  pintarTodo();
+  msgCopia('Listo: agregué '+nuevas.length+(nuevas.length===1?' toma':' tomas')+(repetidas?'. '+repetidas+' ya estaban.':'.'));
+});
+
+/* ---------- Instalar en el celular ---------- */
+const EN_APP=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+let pedidoInstalar=null;
+function verInstalar(texto,conBoton){
+  if(EN_APP||leerLocal('cartilla.noInstalar','')==='1') return;
+  $('instalarTxt').textContent=texto;$('instalarSi').hidden=!conBoton;$('instalar').hidden=false;
+}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();pedidoInstalar=e;verInstalar('Instálala en tu pantalla de inicio para abrirla como una app, incluso sin internet.',true)});
+window.addEventListener('appinstalled',()=>{$('instalar').hidden=true});
+$('instalarSi').addEventListener('click',async()=>{
+  if(!pedidoInstalar) return;
+  pedidoInstalar.prompt();try{await pedidoInstalar.userChoice}catch(e){}
+  pedidoInstalar=null;$('instalar').hidden=true;
+});
+$('instalarNo').addEventListener('click',()=>{$('instalar').hidden=true;escribirLocal('cartilla.noInstalar','1')});
+if(ES_IOS&&!EN_APP){
+  const safari=/Safari/.test(navigator.userAgent)&&!/CriOS|FxiOS|EdgiOS|GSA/.test(navigator.userAgent);
+  verInstalar(safari?'Para tenerla como app: toca el botón Compartir (el cuadrado con una flecha hacia arriba) y elige Agregar a inicio.':'Para tenerla como app, abre esta página en Safari, toca Compartir y elige Agregar a inicio.',false);
+}
+
+/* ---------- Funcionar sin internet ---------- */
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})});
+}
+pintarCopia();
+setTimeout(()=>{cargarPdfLib().catch(()=>{})},2500);
+</script>
+</body>
+</html>
